@@ -24,17 +24,22 @@
             border-radius: 1rem;
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
             max-width: 90%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 20rem;
         }
     </style>
 </head>
 <body>
 
-    <div class="weather-card">
+    <div class="weather-card rounded-xl">
         <h1 class="text-3xl font-bold mb-4">South West London</h1>
         <div id="weather-display" class="flex flex-col items-center justify-center">
             <p>Loading weather data...</p>
         </div>
-        <p class="text-xs text-gray-400 mt-4">Powered by OpenWeatherMap</p>
+        <p class="text-xs text-gray-400 mt-4">Powered by Open-Meteo</p>
     </div>
 
     <script>
@@ -42,11 +47,12 @@
             const displayElement = document.getElementById('weather-display');
 
             // IMPORTANT: Replace 'YOUR_GAS_WEB_APP_URL' with the URL of your deployed Google Apps Script web app.
-            const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyXjcK-wj_ZB4RlGES5j1BA6WoXwUFij8aQz6OEQtN7kIHNp0TWFcy6E85KWCeu2d_UyA/exec';
+            // This URL must be from the most recent "New deployment" of your script.
+            const GAS_WEB_APP_URL = 'YOUR_GAS_WEB_APP_URL';
             const LAT = 51.42;
             const LON = -0.22;
 
-            if (GAS_WEB_APP_URL === 'https://script.google.com/macros/s/AKfycbw01mNTl78BDoCcUS8q0ZppwxeGkhHgXqYf-hpqMRcIEi1_8DawUsLImeTuehdJ2KrIFw/exec') {
+            if (GAS_WEB_APP_URL === 'YOUR_GAS_WEB_APP_URL') {
                 displayElement.innerHTML = `
                     <p class="text-red-500">Error: Google Apps Script URL not set.</p>
                     <p class="text-sm mt-2">Please edit this file and replace 'YOUR_GAS_WEB_APP_URL' with your deployed web app URL.</p>
@@ -54,40 +60,75 @@
                 return;
             }
 
-            const apiUrl = \`\${GAS_WEB_APP_URL}?lat=\${LAT}&lon=\${LON}\`;
+            const apiUrl = `${GAS_WEB_APP_URL}?lat=${LAT}&lon=${LON}`;
+
+            // Helper function to get weather description from WMO code
+            const getWeatherDescription = (code) => {
+              const descriptions = {
+                0: "Clear sky",
+                1: "Mainly clear",
+                2: "Partly cloudy",
+                3: "Overcast",
+                45: "Fog",
+                48: "Depositing rime fog",
+                51: "Light drizzle",
+                53: "Moderate drizzle",
+                55: "Dense drizzle",
+                56: "Light freezing drizzle",
+                57: "Dense freezing drizzle",
+                61: "Light rain",
+                63: "Moderate rain",
+                65: "Heavy rain",
+                66: "Light freezing rain",
+                67: "Heavy freezing rain",
+                71: "Light snow fall",
+                73: "Moderate snow fall",
+                75: "Heavy snow fall",
+                77: "Snow grains",
+                80: "Light rain showers",
+                81: "Moderate rain showers",
+                82: "Violent rain showers",
+                85: "Light snow showers",
+                86: "Heavy snow showers",
+                95: "Thunderstorm",
+                96: "Thunderstorm with hail",
+                99: "Thunderstorm with heavy hail"
+              };
+              return descriptions[code] || "Unknown weather";
+            };
 
             fetch(apiUrl)
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error(\`Network response was not ok: \${response.statusText}\`);
+                        throw new Error(`Network response was not ok: ${response.statusText}`);
                     }
                     return response.json();
                 })
                 .then(data => {
-                    if (data.list && data.list.length > 0) {
-                        // The first item in the list is the most immediate forecast (next 3 hours)
-                        const forecast = data.list[0];
-                        const iconCode = forecast.weather[0].icon;
-                        const description = forecast.weather[0].description;
-                        const temperature = forecast.main.temp.toFixed(0);
+                    if (data && data.current) {
+                        const temperature = data.current.temperature_2m.toFixed(0);
+                        const weatherCode = data.current.weather_code;
+                        const windSpeed = data.current.wind_speed_10m.toFixed(1);
+                        const description = getWeatherDescription(weatherCode);
 
-                        displayElement.innerHTML = \`
-                            <img src="https://openweathermap.org/img/wn/\${iconCode}@4x.png" alt="\${description}" class="w-48 h-48 mx-auto" />
-                            <p class="text-2xl mt-4 capitalize">\${description}</p>
-                            <p class="text-xl mt-2">\${temperature}°C</p>
-                        \`;
+                        displayElement.innerHTML = `
+                            <p class="text-5xl mt-4 font-bold">${temperature}°C</p>
+                            <p class="text-2xl mt-4 capitalize">${description}</p>
+                            <p class="text-md mt-2 text-gray-400">Wind: ${windSpeed} km/h</p>
+                        `;
                     } else {
-                        displayElement.innerHTML = '<p class="text-red-500">No forecast data found.</p>';
+                        displayElement.innerHTML = '<p class="text-red-500">No current weather data found.</p>';
                     }
                 })
                 .catch(error => {
                     console.error('Fetch error:', error);
-                    displayElement.innerHTML = \`
+                    displayElement.innerHTML = `
                         <p class="text-red-500">Failed to load weather data.</p>
-                        <p class="text-sm mt-2">Please check your Google Apps Script URL.</p>
-                    \`;
+                        <p class="text-sm mt-2">Please check your Google Apps Script URL and deployment status.</p>
+                    `;
                 });
         });
     </script>
 </body>
 </html>
+
