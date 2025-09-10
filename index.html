@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SW London Weather</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+        .weather-card {
+            background-color: #1a1a1a;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+            max-width: 90%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="weather-card">
+        <h1 class="text-3xl font-bold mb-4">South West London</h1>
+        <div id="weather-display" class="flex flex-col items-center justify-center">
+            <p>Loading weather data...</p>
+        </div>
+        <p class="text-xs text-gray-400 mt-4">Powered by OpenWeatherMap</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const displayElement = document.getElementById('weather-display');
+
+            // IMPORTANT: Replace 'YOUR_GAS_WEB_APP_URL' with the URL of your deployed Google Apps Script web app.
+            const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyPPmJEH_9bf_45HdyTQ2iMwj6jqbnAm1Qw1g5QJ76YEZ9AZ76vu5Hv5n1SCSulP-SEUA/exec';
+            const LAT = 51.42;
+            const LON = -0.22;
+
+            if (GAS_WEB_APP_URL === 'YOUR_GAS_WEB_APP_URL') {
+                displayElement.innerHTML = `
+                    <p class="text-red-500">Error: Google Apps Script URL not set.</p>
+                    <p class="text-sm mt-2">Please edit this file and replace 'YOUR_GAS_WEB_APP_URL' with your deployed web app URL.</p>
+                `;
+                return;
+            }
+
+            const apiUrl = \`\${GAS_WEB_APP_URL}?lat=\${LAT}&lon=\${LON}\`;
+
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(\`Network response was not ok: \${response.statusText}\`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.list && data.list.length > 0) {
+                        // The first item in the list is the most immediate forecast (next 3 hours)
+                        const forecast = data.list[0];
+                        const iconCode = forecast.weather[0].icon;
+                        const description = forecast.weather[0].description;
+                        const temperature = forecast.main.temp.toFixed(0);
+
+                        displayElement.innerHTML = \`
+                            <img src="https://openweathermap.org/img/wn/\${iconCode}@4x.png" alt="\${description}" class="w-48 h-48 mx-auto" />
+                            <p class="text-2xl mt-4 capitalize">\${description}</p>
+                            <p class="text-xl mt-2">\${temperature}°C</p>
+                        \`;
+                    } else {
+                        displayElement.innerHTML = '<p class="text-red-500">No forecast data found.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    displayElement.innerHTML = \`
+                        <p class="text-red-500">Failed to load weather data.</p>
+                        <p class="text-sm mt-2">Please check your Google Apps Script URL.</p>
+                    \`;
+                });
+        });
+    </script>
+</body>
+</html>
