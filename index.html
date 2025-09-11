@@ -1,3 +1,16 @@
+<!-- 
+  This is a self-contained HTML file that also includes the Google Apps Script function
+  needed to act as a proxy for the weather API.
+  
+  Instructions:
+  1. Create a new Google Apps Script project.
+  2. Copy the "doGet" function from the section below and paste it into Code.gs in your Apps Script project.
+  3. Deploy the Apps Script as a new web app. Ensure "Who has access" is set to "Anyone."
+  4. Copy the "exec" URL from the deployment.
+  5. Go back to this HTML file and replace the 'YOUR_GAS_WEB_APP_URL' placeholder with your copied URL.
+  6. Save and open this file in a browser.
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,7 +34,6 @@
     </style>
 </head>
 <body>
-
     <div>
         <div id="weather-display" class="flex flex-col items-center justify-center">
             <p>Checking weather for LMS route...</p>
@@ -29,6 +41,61 @@
     </div>
 
     <script>
+        // Copy the following function into your Google Apps Script project's Code.gs file.
+        // It should be placed outside of any <script> tags.
+        // This is a comment block to keep the server-side code visible in the same file.
+        /*
+        /**
+         * A simple web app to fetch weather data from Open-Meteo API.
+         * This script serves as a proxy to handle the API request.
+         *
+         * @param {object} e The event object from the web app request.
+         * @return {object} The JSON response from the weather API.
+         */
+        /*
+        function doGet(e) {
+          // Extract latitude and longitude from the request parameters
+          const lat = e.parameter.lat;
+          const lon = e.parameter.lon;
+        
+          // Define the base URL for the Open-Meteo API
+          const apiUrl = "https://api.open-meteo.com/v1/forecast";
+        
+          // Construct the parameters for the API call.
+          const params = {
+            latitude: lat,
+            longitude: lon,
+            current: "temperature_2m,weather_code,is_day,precipitation_probability",
+            timezone: "GMT",
+          };
+        
+          // Convert the parameters object to a URL query string
+          const queryString = Object.keys(params)
+            .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(params[key]))
+            .join('&');
+        
+          const fullUrl = `${apiUrl}?${queryString}`;
+        
+          try {
+            // Fetch the data from the Open-Meteo API
+            const response = UrlFetchApp.fetch(fullUrl);
+            const json = response.getContentText();
+        
+            // Set the content type to JSON to send a proper response to the front-end
+            return ContentService.createTextOutput(json)
+              .setMimeType(ContentService.MimeType.JSON);
+        
+          } catch (error) {
+            // Log any errors for debugging and return an error message
+            Logger.log("Error fetching weather data: " + error.message);
+            return ContentService.createTextOutput(JSON.stringify({
+              error: "Failed to fetch weather data. Check logs for details.",
+              message: error.message
+            })).setMimeType(ContentService.MimeType.JSON);
+          }
+        }
+        */
+
         document.addEventListener('DOMContentLoaded', () => {
             const displayElement = document.getElementById('weather-display');
 
@@ -38,7 +105,7 @@
             const LAT = 51.42;
             const LON = -0.22;
 
-            if (GAS_WEB_APP_URL === 'YOUR_GAS_WEB_APP_URL') {
+            if (GAS_WEB_APP_URL === 'https://script.google.com/macros/s/AKfycbwMu6aH7zU61-ndrH-T4DB3so3FYVkCUB0_Rh7LVKCPgK7qV6sA3hQNM3rBAI_TTUpVOA/exec') {
                 displayElement.innerHTML = `
                     <p class="text-red-500">Error: Google Apps Script URL not set.</p>
                     <p class="text-sm mt-2">Please edit this file and replace 'YOUR_GAS_WEB_APP_URL' with your deployed web app URL.</p>
@@ -50,13 +117,10 @@
 
             // Helper function to get a weather emoji from a WMO code
             const wmoWeatherCodeToEmoji = (code, isDay) => {
-                const now = new Date();
-                const currentHour = now.getHours();
-                // A more reliable way to determine "night" is to check the local hour.
-                const isNight = currentHour < 6 || currentHour > 19;
+                // A more reliable way to determine "night" is to check the `is_day` boolean from the API.
+                const isNight = isDay === 0;
 
                 const emojis = {
-                    // Use local time for clear sky to reliably show sun/moon
                     0: isNight ? "🌙" : "☀️", 
                     1: "🌤️", // Mainly clear
                     2: "⛅️", // Partly cloudy
@@ -103,10 +167,8 @@
                         const description = getWeatherDescription(weatherCode);
                         const isDay = data.current.is_day;
                         const weatherEmoji = wmoWeatherCodeToEmoji(weatherCode, isDay);
+                        const rainProbability = data.current.precipitation_probability;
                         
-                        // Placeholder for rain probability since it's not in the current API response.
-                        const rainProbability = '4000(place holder)'; 
-
                         displayElement.innerHTML = `
                             <p class="text-[10rem] lg:text-[15rem]">${weatherEmoji}</p>
                             <div class="flex flex-col items-center justify-center mt-[-2rem]">
@@ -147,3 +209,4 @@
     </script>
 </body>
 </html>
+
