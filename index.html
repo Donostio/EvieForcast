@@ -58,6 +58,10 @@
           const lat = e.parameter.lat;
           const lon = e.parameter.lon;
         
+          // Define the number of forecast hours to retrieve. 
+          // IMPORTANT: This number MUST match the value in the HTML file's script.
+          const FORECAST_HOURS = 3;
+
           // Define the base URL for the Open-Meteo API
           const apiUrl = "https://api.open-meteo.com/v1/forecast";
         
@@ -68,7 +72,7 @@
             longitude: lon,
             current: "temperature_2m,weather_code,is_day",
             hourly: "precipitation_probability",
-            forecast_hours: 6,
+            forecast_hours: FORECAST_HOURS,
             timezone: "GMT",
           };
         
@@ -98,9 +102,13 @@
           }
         }
         */
-
+        
         document.addEventListener('DOMContentLoaded', () => {
             const displayElement = document.getElementById('weather-display');
+
+            // Define the number of forecast hours to check for rain.
+            // IMPORTANT: This number MUST match the value in your Google Apps Script.
+            const FORECAST_HOURS = 6;
 
             // IMPORTANT: Replace 'YOUR_GAS_WEB_APP_URL' with the URL of your deployed Google Apps Script web app.
             // This URL must be from the most recent "New deployment" of your script.
@@ -170,15 +178,15 @@
                         const isDay = data.current.is_day;
                         const weatherEmoji = wmoWeatherCodeToEmoji(weatherCode, isDay);
                         
-                        // Find the highest precipitation probability in the next 6 hours
-                        const rainProbabilities = data.hourly.precipitation_probability.slice(0, 6);
+                        // Find the highest precipitation probability in the next `FORECAST_HOURS`
+                        const rainProbabilities = data.hourly.precipitation_probability.slice(0, FORECAST_HOURS);
                         const maxRainProbability = Math.max(...rainProbabilities);
 
                         displayElement.innerHTML = `
                             <p class="text-[10rem] lg:text-[15rem]">${weatherEmoji}</p>
                             <div class="flex flex-col items-center justify-center mt-[-2rem]">
                                 <p class="text-xl capitalize">${description}. ${temperature}°C</p>
-                                <p class="text-md mt-2">Chance of rain (next 6 hrs): ${maxRainProbability}% 🌧️</p>
+                                <p class="text-md mt-2">Chance of rain (next ${FORECAST_HOURS} hrs): ${maxRainProbability}% 🌧️</p>
                             </div>
                         `;
                     } else {
@@ -214,5 +222,6 @@
     </script>
 </body>
 </html>
+
 
 
