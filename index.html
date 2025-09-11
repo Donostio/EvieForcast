@@ -18,18 +18,11 @@
             min-height: 100vh;
             text-align: center;
         }
-
-        /* Hides the content until the script has loaded the weather data */
-        .hidden {
-            visibility: hidden;
-            opacity: 0;
-            transition: opacity 0.5s ease-in-out;
-        }
     </style>
 </head>
 <body>
     <div>
-        <div id="weather-display" class="flex flex-col items-center justify-center hidden">
+        <div id="weather-display" class="flex flex-col items-center justify-center">
             <p>Checking weather on your LMS route...</p>
             <p> </p>
             <p> </p>
@@ -41,18 +34,30 @@
         document.addEventListener('DOMContentLoaded', () => {
             const displayElement = document.getElementById('weather-display');
 
-            // IMPORTANT: The URL has been updated based on your provided script URL
-            const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwCW4-xc_wcBJdbcRYndulkp4asfBqrERxhPQoY-7oadT9nai5wTN7qG7H9OjDRkJunmg/exec';
+            // IMPORTANT: This URL must be from the most recent deployment of your Apps Script
+            const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwCW4-xc_wcBJdbcRYndulkp4asfBqrERxhPQoY-7oadT9nai5wTN7qG7H9OjDRkJunmg/exec'; 
             const LAT = 51.42;
             const LON = -0.22;
             const apiUrl = `${GAS_WEB_APP_URL}?lat=${LAT}&lon=${LON}`;
-            
+
+            if (GAS_WEB_APP_URL === 'YOUR_NEWLY_DEPLOYED_APPS_SCRIPT_URL_HERE') {
+                 displayElement.innerHTML = `
+                    <p class="text-red-500">Error: Google Apps Script URL not set.</p>
+                    <p class="text-sm mt-2">Please edit this file and replace 'YOUR_NEWLY_DEPLOYED_APPS_SCRIPT_URL_HERE' with your deployed web app URL.</p>
+                `;
+                return;
+            }
+
             // Helper function to get a weather emoji from a WMO code
             const wmoWeatherCodeToEmoji = (code, isDay) => {
                 const isNight = isDay === 0;
                 const emojis = {
-                    0: isNight ? "🌙" : "☀️", 1: isNight ? "☁️🌙" : "🌤️", 2: isNight ? "☁️🌙" : "⛅️", 3: "☁️",
-                    45: "🌫️", 48: "🌫️", 51: "🌦️", 53: "🌧️", 55: "🌧️", 56: "🥶🌧️", 57: "🥶🌧️",
+                    0: isNight ? "🌙" : "☀️",
+                    1: isNight ? "☁️🌙" : "🌤️",
+                    2: isNight ? "☁️🌙" : "⛅️",
+                    3: "☁️",
+                    45: "🌫️", 48: "🌫️",
+                    51: "🌦️", 53: "🌧️", 55: "🌧️", 56: "🥶🌧️", 57: "🥶🌧️",
                     61: "🌧️", 63: "🌧️", 65: "🌧️", 66: "🥶🌧️", 67: "🥶🌧️",
                     71: "🌨️", 73: "🌨️", 75: "🌨️", 77: "🌨️",
                     80: "⛈️", 81: "⛈️", 82: "⛈️", 85: "🌨️", 86: "🌨️",
@@ -88,14 +93,17 @@
                 })
                 .then(data => {
                     if (data && data.daily && data.hourly) {
+                        // Extract daily data for overall forecast
                         const dailyWeatherCode = data.daily.weather_code[0];
                         const dailyMaxTemp = data.daily.temperature_2m_max[0].toFixed(0);
                         const dailyMinTemp = data.daily.temperature_2m_min[0].toFixed(0);
                         const dailyDescription = getWeatherDescription(dailyWeatherCode);
 
+                        // Use current data for day/night
                         const isDay = data.current.is_day;
                         const dailyWeatherEmoji = wmoWeatherCodeToEmoji(dailyWeatherCode, isDay);
-
+                        
+                        // Extract hourly data for the 3-hour rain forecast
                         const rainProbabilities = data.hourly.precipitation_probability.slice(0, 3);
                         const maxRainProbability = Math.max(...rainProbabilities);
 
@@ -103,18 +111,16 @@
                             <p class="text-[10rem] lg:text-[15rem]">${dailyWeatherEmoji}</p>
                             <div class="flex flex-col items-center justify-center mt-[-2rem]">
                                 <p class="text-xl capitalize">${dailyDescription}</p>
-                                <p class="text-md mt-2">High ${dailyMaxTemp}°C  -  Low ${dailyMinTemp}°C</p>
-                                <p class="text-md mt-2">🌧️ ${maxRainProbability}%  -  chance of rain next 3 hrs</p>
+                                <p class="text-md mt-2">High ${dailyMaxTemp}°C  -   Low ${dailyMinTemp}°C</p>
+                                <p class="text-md mt-2">🌧️ ${maxRainProbability}%  -  chance of rain next 3 hrs </p>
                             </div>
                         `;
-
-                        // Show the content by removing the 'hidden' class
-                        displayElement.classList.remove('hidden');
-
+                        
+                        // Send the 'page-ready' signal to the parent window
                         window.parent.postMessage({ type: 'page-ready' }, '*');
+                        
                     } else {
                         displayElement.innerHTML = '<p class="text-red-500">No weather data found. Data may be incomplete.</p>';
-                        displayElement.classList.remove('hidden'); // Show error message
                     }
                 })
                 .catch(error => {
@@ -123,7 +129,6 @@
                         <p class="text-red-500">Failed to load weather data.</p>
                         <p class="text-sm mt-2">Please check your Google Apps Script URL and deployment status.</p>
                     `;
-                    displayElement.classList.remove('hidden'); // Show error message
                 });
         });
     </script>
