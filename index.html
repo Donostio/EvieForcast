@@ -50,8 +50,14 @@
 
             // Helper function to get a weather emoji from a WMO code
             const wmoWeatherCodeToEmoji = (code, isDay) => {
+                const now = new Date();
+                const currentHour = now.getHours();
+                // A more reliable way to determine "night" is to check the local hour.
+                const isNight = currentHour < 6 || currentHour > 19;
+
                 const emojis = {
-                    0: isDay ? "☀️" : "🌙", // Clear sky
+                    // Use local time for clear sky to reliably show sun/moon
+                    0: isNight ? "🌙" : "☀️", 
                     1: "🌤️", // Mainly clear
                     2: "⛅️", // Partly cloudy
                     3: "☁️", // Overcast
@@ -99,7 +105,7 @@
                         const weatherEmoji = wmoWeatherCodeToEmoji(weatherCode, isDay);
                         
                         // Placeholder for rain probability since it's not in the current API response.
-                        const rainProbability = '40'; 
+                        const rainProbability = '4000(place holder)'; 
 
                         displayElement.innerHTML = `
                             <p class="text-[10rem] lg:text-[15rem]">${weatherEmoji}</p>
@@ -141,9 +147,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
