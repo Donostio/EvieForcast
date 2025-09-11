@@ -1,219 +1,137 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SW London Weather</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #000;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            text-align: center;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SW London Weather</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-    <div>
-        <div id="weather-display" class="flex flex-col items-center justify-center">
-            <p>Checking weather on your LMS route...</p>
-            <p> </p>
-            <p> </p>
-            <p> 🚇      🚶🏼‍♀️‍➡️       🧥        ☂️      ? </p>
-        </div>
-    </div>
+    <div>
+        <div id="weather-display" class="flex flex-col items-center justify-center">
+            <p>Checking weather on your LMS route...</p>
+            <p> </p>
+            <p> </p>
+            <p> 🚇      🚶🏼‍♀️‍➡️       🧥        ☂️      ? </p>
+        </div>
+    </div>
 
-    <script>
-        // Copy the following function into your Google Apps Script project's Code.gs file.
-        // It should be placed outside of any <script> tags.
-        // This is a comment block to keep the server-side code visible in the same file.
-        /*
-        /**
-         * A simple web app to fetch weather data from Open-Meteo API.
-         * This script serves as a proxy to handle the API request.
-         *
-         * @param {object} e The event object from the web app request.
-         * @return {object} The JSON response from the weather API.
-         */
-        /*
-        function doGet(e) {
-          // Extract latitude and longitude from the request parameters
-          const lat = e.parameter.lat;
-          const lon = e.parameter.lon;
-        
-          // Define the number of forecast hours to retrieve. 
-          // IMPORTANT: This number MUST match the value in the HTML file's script.
-          const FORECAST_HOURS = 3;
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const displayElement = document.getElementById('weather-display');
 
-          // Define the base URL for the Open-Meteo API
-          const apiUrl = "https://api.open-meteo.com/v1/forecast";
-        
-          // Construct the parameters for the API call.
-          // Now requesting hourly data and a 6-hour forecast
-          const params = {
-            latitude: lat,
-            longitude: lon,
-            current: "temperature_2m,weather_code,is_day",
-            hourly: "precipitation_probability",
-            forecast_hours: FORECAST_HOURS,
-            timezone: "GMT",
-          };
-        
-          // Convert the parameters object to a URL query string
-          const queryString = Object.keys(params)
-            .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(params[key]))
-            .join('&');
-        
-          const fullUrl = `${apiUrl}?${queryString}`;
-        
-          try {
-            // Fetch the data from the Open-Meteo API
-            const response = UrlFetchApp.fetch(fullUrl);
-            const json = response.getContentText();
-        
-            // Set the content type to JSON to send a proper response to the front-end
-            return ContentService.createTextOutput(json)
-              .setMimeType(ContentService.MimeType.JSON);
-        
-          } catch (error) {
-            // Log any errors for debugging and return an error message
-            Logger.log("Error fetching weather data: " + error.message);
-            return ContentService.createTextOutput(JSON.stringify({
-              error: "Failed to fetch weather data. Check logs for details.",
-              message: error.message
-            })).setMimeType(ContentService.MimeType.JSON);
-          }
-        }
-        */
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            const displayElement = document.getElementById('weather-display');
+            // IMPORTANT: This URL must be from the most recent deployment of your Apps Script
+            const GAS_WEB_APP_URL = 'YOUR_NEWLY_DEPLOYED_APPS_SCRIPT_URL_HERE'; 
+            const LAT = 51.42;
+            const LON = -0.22;
+            const apiUrl = `${GAS_WEB_APP_URL}?lat=${LAT}&lon=${LON}`;
 
-            // Define the number of forecast hours to check for rain.
-            // IMPORTANT: This number MUST match the value in your Google Apps Script.
-            const FORECAST_HOURS = 3;
+            if (GAS_WEB_APP_URL === 'YOUR_NEWLY_DEPLOYED_APPS_SCRIPT_URL_HERE') {
+                 displayElement.innerHTML = `
+                    <p class="text-red-500">Error: Google Apps Script URL not set.</p>
+                    <p class="text-sm mt-2">Please edit this file and replace 'YOUR_NEWLY_DEPLOYED_APPS_SCRIPT_URL_HERE' with your deployed web app URL.</p>
+                `;
+                return;
+            }
 
-            // IMPORTANT: Replace 'YOUR_GAS_WEB_APP_URL' with the URL of your deployed Google Apps Script web app.
-            // This URL must be from the most recent "New deployment" of your script.
-            const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxHI6qHLY8cu8Ziy3s0P-QDIrrSOcM4ZH6-Oj1t2mzHDnaAuOYhDSr8LaTQPYgw3tRTAQ/exec';
-            const LAT = 51.42;
-            const LON = -0.22;
+            // Helper function to get a weather emoji from a WMO code
+            const wmoWeatherCodeToEmoji = (code, isDay) => {
+                const isNight = isDay === 0;
+                const emojis = {
+                    0: isNight ? "🌙" : "☀️",
+                    1: isNight ? "☁️🌙" : "🌤️",
+                    2: isNight ? "☁️🌙" : "⛅️",
+                    3: "☁️",
+                    45: "🌫️", 48: "🌫️",
+                    51: "🌦️", 53: "🌧️", 55: "🌧️", 56: "🥶🌧️", 57: "🥶🌧️",
+                    61: "🌧️", 63: "🌧️", 65: "🌧️", 66: "🥶🌧️", 67: "🥶🌧️",
+                    71: "🌨️", 73: "🌨️", 75: "🌨️", 77: "🌨️",
+                    80: "⛈️", 81: "⛈️", 82: "⛈️", 85: "🌨️", 86: "🌨️",
+                    95: "🌩️", 96: "🌩️", 99: "🌩️"
+                };
+                return emojis[code] || "❓";
+            };
 
-            if (GAS_WEB_APP_URL === 'https://script.google.com/macros/s/AKfycbwMu6aH7zU61-ndrH-T4DB3so3FYVkCUB0_Rh7LVKCPgK7qV6sA3hQNM3rBAI_TTUpVOA/exec') {
-                displayElement.innerHTML = `
-                    <p class="text-red-500">Error: Google Apps Script URL not set.</p>
-                    <p class="text-sm mt-2">Please edit this file and replace 'YOUR_GAS_WEB_APP_URL' with your deployed web app URL.</p>
-                `;
-                return;
-            }
+            // Helper function to get weather description from WMO code
+            const getWeatherDescription = (code) => {
+                const descriptions = {
+                    0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
+                    45: "Fog", 48: "Depositing rime fog",
+                    51: "Light drizzle", 53: "Moderate drizzle", 55: "Dense drizzle",
+                    56: "Light freezing drizzle", 57: "Dense freezing drizzle",
+                    61: "Light rain", 63: "Moderate rain", 65: "Heavy rain",
+                    66: "Light freezing rain", 67: "Heavy freezing rain",
+                    71: "Light snow fall", 73: "Moderate snow fall", 75: "Heavy snow fall",
+                    77: "Snow grains",
+                    80: "Light rain showers", 81: "Moderate rain showers", 82: "Violent rain showers",
+                    85: "Light snow", 86: "Heavy snow",
+                    95: "Thunderstorm", 96: "Thunderstorm with hail", 99: "Thunderstorm with heavy hail"
+                };
+                return descriptions[code] || "Unknown weather";
+            };
 
-            const apiUrl = `${GAS_WEB_APP_URL}?lat=${LAT}&lon=${LON}`;
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Network response was not ok: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.daily && data.hourly) {
+                        // Extract daily data for overall forecast
+                        const dailyWeatherCode = data.daily.weather_code[0];
+                        const dailyMaxTemp = data.daily.temperature_2m_max[0].toFixed(0);
+                        const dailyMinTemp = data.daily.temperature_2m_min[0].toFixed(0);
+                        const dailyDescription = getWeatherDescription(dailyWeatherCode);
 
-            // Helper function to get a weather emoji from a WMO code
-            const wmoWeatherCodeToEmoji = (code, isDay) => {
-                const isNight = isDay === 0;
+                        // Use current data for day/night
+                        const isDay = data.current.is_day;
+                        const dailyWeatherEmoji = wmoWeatherCodeToEmoji(dailyWeatherCode, isDay);
+                        
+                        // Extract hourly data for the 3-hour rain forecast
+                        const rainProbabilities = data.hourly.precipitation_probability.slice(0, 3);
+                        const maxRainProbability = Math.max(...rainProbabilities);
 
-                const emojis = {
-                    0: isNight ? "🌙" : "☀️", 
-                    1: isNight ? "☁️🌙" : "🌤️",
-                    2: isNight ? "☁️🌙" : "⛅️",
-                    3: "☁️",
-                    45: "🌫️",
-                    48: "🌫️",
-                    51: "🌦️",
-                    53: "🌧️",
-                    55: "🌧️",
-                    56: "🥶🌧️",
-                    57: "🥶🌧️",
-                    61: "🌧️",
-                    63: "🌧️",
-                    65: "🌧️",
-                    66: "🥶🌧️",
-                    67: "🥶🌧️",
-                    71: "🌨️",
-                    73: "🌨️",
-                    75: "🌨️",
-                    77: "🌨️",
-                    80: "⛈️",
-                    81: "⛈️",
-                    82: "⛈️",
-                    85: "🌨️",
-                    86: "🌨️",
-                    95: "🌩️",
-                    96: "🌩️",
-                    99: "🌩️"
-                };
-                return emojis[code] || "❓";
-            };
-
-            fetch(apiUrl)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Network response was not ok: ${response.statusText}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data && data.current) {
-                        const temperature = data.current.temperature_2m.toFixed(0);
-                        const weatherCode = data.current.weather_code;
-                        const description = getWeatherDescription(weatherCode);
-                        const isDay = data.current.is_day;
-                        const weatherEmoji = wmoWeatherCodeToEmoji(weatherCode, isDay);
-                        
-                        // Find the highest precipitation probability in the next `FORECAST_HOURS`
-                        const rainProbabilities = data.hourly.precipitation_probability.slice(0, FORECAST_HOURS);
-                        const maxRainProbability = Math.max(...rainProbabilities);
-
-                        displayElement.innerHTML = `
-                            <p class="text-[10rem] lg:text-[15rem]">${weatherEmoji}</p>
-                            <div class="flex flex-col items-center justify-center mt-[-2rem]">
-                                <p class="text-xl capitalize">${description}. ${temperature}°C</p>
-                                <p class="text-md mt-2"> ${maxRainProbability}% 🌧️ - chance of rain in next ${FORECAST_HOURS} hrs </p>
-                            </div>
-                        `;
-                        
-                        // Send the 'page-ready' signal to the parent window
-                        window.parent.postMessage({ type: 'page-ready' }, '*');
-                        
-                    } else {
-                        displayElement.innerHTML = '<p class="text-red-500">No current weather data found.</p>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Fetch error:', error);
-                    displayElement.innerHTML = `
-                        <p class="text-red-500">Failed to load weather data.</p>
-                        <p class="text-sm mt-2">Please check your Google Apps Script URL and deployment status.</p>
-                    `;
-                });
-        });
-
-        // Helper function to get weather description from WMO code
-        const getWeatherDescription = (code) => {
-          const descriptions = {
-            0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
-            45: "Fog", 48: "Depositing rime fog",
-            51: "Light drizzle", 53: "Moderate drizzle", 55: "Dense drizzle",
-            56: "Light freezing drizzle", 57: "Dense freezing drizzle",
-            61: "Light rain", 63: "Moderate rain", 65: "Heavy rain",
-            66: "Light freezing rain", 67: "Heavy freezing rain",
-            71: "Light snow fall", 73: "Moderate snow fall", 75: "Heavy snow fall",
-            77: "Snow grains",
-            80: "Light rain showers", 81: "Moderate rain showers", 82: "Violent rain showers",
-            85: "Light snow", 86: "Heavy snow",
-            95: "Thunderstorm", 96: "Thunderstorm with hail", 99: "Thunderstorm with heavy hail"
-          };
-          return descriptions[code] || "Unknown weather";
-        };
-    </script>
+                        displayElement.innerHTML = `
+                            <p class="text-[10rem] lg:text-[15rem]">${dailyWeatherEmoji}</p>
+                            <div class="flex flex-col items-center justify-center mt-[-2rem]">
+                                <p class="text-xl capitalize">${dailyDescription}</p>
+                                <p class="text-md mt-2">High: ${dailyMaxTemp}°C / Low: ${dailyMinTemp}°C</p>
+                                <p class="text-md mt-2"> ${maxRainProbability}% 🌧️ - chance of rain in next 3 hrs </p>
+                            </div>
+                        `;
+                        
+                        // Send the 'page-ready' signal to the parent window
+                        window.parent.postMessage({ type: 'page-ready' }, '*');
+                        
+                    } else {
+                        displayElement.innerHTML = '<p class="text-red-500">No weather data found. Data may be incomplete.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    displayElement.innerHTML = `
+                        <p class="text-red-500">Failed to load weather data.</p>
+                        <p class="text-sm mt-2">Please check your Google Apps Script URL and deployment status.</p>
+                    `;
+                });
+        });
+    </script>
 </body>
 </html>
 
