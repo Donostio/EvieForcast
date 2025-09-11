@@ -117,13 +117,12 @@
 
             // Helper function to get a weather emoji from a WMO code
             const wmoWeatherCodeToEmoji = (code, isDay) => {
-                // A more reliable way to determine "night" is to check the `is_day` boolean from the API.
                 const isNight = isDay === 0;
 
                 const emojis = {
                     0: isNight ? "🌙" : "☀️", 
-                    1: "🌤️", // Mainly clear
-                    2: "⛅️", // Partly cloudy
+                    1: isNight ? "☁️🌙" : "🌤️", // Mainly clear - now shows moon at night
+                    2: isNight ? "☁️🌙" : "⛅️", // Partly cloudy - now shows moon at night
                     3: "☁️", // Overcast
                     45: "🌫️", // Fog
                     48: "🌫️", // Depositing rime fog
@@ -209,4 +208,5 @@
     </script>
 </body>
 </html>
+
 
