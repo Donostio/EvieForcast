@@ -37,6 +37,8 @@
     <div>
         <div id="weather-display" class="flex flex-col items-center justify-center">
             <p>Checking weather for LMS route...</p>
+            <p> </p>
+            <p> 🚇   🚶🏼‍♀️‍➡️    🧥     ☂️   ? </p>
         </div>
     </div>
 
@@ -186,7 +188,7 @@
                             <p class="text-[10rem] lg:text-[15rem]">${weatherEmoji}</p>
                             <div class="flex flex-col items-center justify-center mt-[-2rem]">
                                 <p class="text-xl capitalize">${description}. ${temperature}°C</p>
-                                <p class="text-md mt-2">Chance of rain (next ${FORECAST_HOURS} hrs): ${maxRainProbability}% 🌧️</p>
+                                <p class="text-md mt-2"> ${maxRainProbability}% 🌧️ - chance of rain in next ${FORECAST_HOURS} hrs </p>
                             </div>
                         `;
                     } else {
