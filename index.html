@@ -24,7 +24,7 @@
 
     <div>
         <div id="weather-display" class="flex flex-col items-center justify-center">
-            <p>Checking weather on route to LMS...</p>
+            <p>Checking weather for LMS route...</p>
         </div>
     </div>
 
@@ -49,9 +49,9 @@
             const apiUrl = `${GAS_WEB_APP_URL}?lat=${LAT}&lon=${LON}`;
 
             // Helper function to get a weather emoji from a WMO code
-            const wmoWeatherCodeToEmoji = (code) => {
+            const wmoWeatherCodeToEmoji = (code, isDay) => {
                 const emojis = {
-                    0: "☀️", // Clear sky
+                    0: isDay ? "☀️" : "🌙", // Clear sky
                     1: "🌤️", // Mainly clear
                     2: "⛅️", // Partly cloudy
                     3: "☁️", // Overcast
@@ -95,12 +95,17 @@
                         const temperature = data.current.temperature_2m.toFixed(0);
                         const weatherCode = data.current.weather_code;
                         const description = getWeatherDescription(weatherCode);
-                        const weatherEmoji = wmoWeatherCodeToEmoji(weatherCode);
+                        const isDay = data.current.is_day;
+                        const weatherEmoji = wmoWeatherCodeToEmoji(weatherCode, isDay);
+                        
+                        // Placeholder for rain probability since it's not in the current API response.
+                        const rainProbability = '40'; 
 
                         displayElement.innerHTML = `
-                            <p class="text-[10rem] lg:text-[15rem] mb-0">${weatherEmoji}</p>
-                            <div class="flex flex-col items-center justify-center">
+                            <p class="text-[10rem] lg:text-[15rem]">${weatherEmoji}</p>
+                            <div class="flex flex-col items-center justify-center mt-[-2rem]">
                                 <p class="text-xl capitalize">${description}. ${temperature}°C</p>
+                                <p class="text-md mt-2">Chance of rain: ${rainProbability}% 🌧️</p>
                             </div>
                         `;
                     } else {
@@ -136,6 +141,7 @@
     </script>
 </body>
 </html>
+
 
 
 
