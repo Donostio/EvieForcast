@@ -42,10 +42,10 @@
 
             if (GAS_WEB_APP_URL === 'YOUR_NEWLY_DEPLOYED_APPS_SCRIPT_URL_HERE') {
                  displayElement.innerHTML = `
-                    <p class="text-red-500">Error: Google Apps Script URL not set.</p>
-                    <p class="text-sm mt-2">Please edit this file and replace 'YOUR_NEWLY_DEPLOYED_APPS_SCRIPT_URL_HERE' with your deployed web app URL.</p>
-                `;
-                return;
+                     <p class="text-red-500">Error: Google Apps Script URL not set.</p>
+                     <p class="text-sm mt-2">Please edit this file and replace 'YOUR_NEWLY_DEPLOYED_APPS_SCRIPT_URL_HERE' with your deployed web app URL.</p>
+                 `;
+                 return;
             }
 
             // Helper function to get a weather emoji from a WMO code
@@ -103,8 +103,8 @@
                         const isDay = data.current.is_day;
                         const dailyWeatherEmoji = wmoWeatherCodeToEmoji(dailyWeatherCode, isDay);
                         
-                        // Extract hourly data for the 3-hour rain forecast
-                        const rainProbabilities = data.hourly.precipitation_probability.slice(0, 3);
+                        // Extract hourly data for the 2-hour rain forecast
+                        const rainProbabilities = data.hourly.precipitation_probability.slice(0, 2);
                         const maxRainProbability = Math.max(...rainProbabilities);
 
                         displayElement.innerHTML = `
@@ -112,7 +112,7 @@
                             <div class="flex flex-col items-center justify-center mt-[-2rem]">
                                 <p class="text-xl capitalize">${dailyDescription}</p>
                                 <p class="text-md mt-2">High ${dailyMaxTemp}°C  -   Low ${dailyMinTemp}°C</p>
-                                <p class="text-md mt-2">🌧️ ${maxRainProbability}%  -  chance of rain next 3 hrs </p>
+                                <p class="text-xl mt-2">🌧️ ${maxRainProbability}%  -  chance of rain next 2 hrs </p>
                             </div>
                         `;
                         
@@ -134,6 +134,3 @@
     </script>
 </body>
 </html>
-
-
-
