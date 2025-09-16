@@ -111,24 +111,26 @@
                         // Use current data for day/night
                         const isDay = data.current.is_day;
                         const dailyWeatherEmoji = wmoWeatherCodeToEmoji(dailyWeatherCode, isDay);
-                         
+                          
                         // Extract hourly data for the 2-hour rain forecast
                         const rainProbabilities = data.hourly.precipitation_probability.slice(0, 2);
                         const maxRainProbability = Math.max(...rainProbabilities);
-                         
+                          
                         displayElement.innerHTML = `
                             <p class="text-[10rem] lg:text-[15rem] leading-none mb-[-2rem]">${dailyWeatherEmoji}</p>
                             <div class="flex flex-col items-center justify-center">
+                                <br>
                                 <p class="text-xl capitalize">${dailyDescription}</p>
                                 <p class="text-xl mt-2">High ${dailyMaxTemp}°C - Low ${dailyMinTemp}°C</p>
                                 <p class="text-xl">${diffText}</p>
+                                <br>
                                 <p class="text-xl mt-2">🌧️ ${maxRainProbability}% chance of rain within 2 hrs </p>
                             </div>
                         `;
-                         
+                          
                         // Send the 'page-ready' signal to the parent window
                         window.parent.postMessage({ type: 'page-ready' }, '*');
-                         
+                          
                     } else {
                         displayElement.innerHTML = '<p class="text-red-500">No weather data found. Data may be incomplete.</p>';
                     }
