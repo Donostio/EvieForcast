@@ -44,7 +44,7 @@
             // Add the 'past_days=1' parameter to the API URL to fetch yesterday's data
             const apiUrl = `${GAS_WEB_APP_URL}?lat=${LAT}&lon=${LON}&past_days=1`;
 
-            if (GAS_WEB_APP_APP_URL === 'YOUR_NEWLY_DEPLOYED_APPS_SCRIPT_URL_HERE') {
+            if (GAS_WEB_APP_URL === 'YOUR_NEWLY_DEPLOYED_APPS_SCRIPT_URL_HERE') {
                 displayElement.innerHTML = `
                     <p class="text-red-500">Error: Google Apps Script URL not set.</p>
                     <p class="text-sm mt-2">Please edit this file and replace 'YOUR_NEWLY_DEPLOYED_APPS_SCRIPT_URL_HERE' with your deployed web app URL.</p>
@@ -76,76 +76,4 @@
                     0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
                     45: "Fog", 48: "Depositing rime fog",
                     51: "Light drizzle", 53: "Moderate drizzle", 55: "Dense drizzle",
-                    56: "Light freezing drizzle", 57: "Dense freezing drizzle",
-                    61: "Light rain", 63: "Moderate rain", 65: "Heavy rain",
-                    66: "Light freezing rain", 67: "Heavy freezing rain",
-                    71: "Light snow fall", 73: "Moderate snow fall", 75: "Heavy snow fall",
-                    77: "Snow grains",
-                    80: "Light rain showers", 81: "Moderate rain showers", 82: "Violent rain showers",
-                    85: "Light snow", 86: "Heavy snow",
-                    95: "Thunderstorm", 96: "Thunderstorm with hail", 99: "Thunderstorm with heavy hail"
-                };
-                return descriptions[code] || "Unknown weather";
-            };
-
-            fetch(apiUrl)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Network response was not ok: ${response.statusText}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data && data.daily && data.hourly) {
-                        // Extract daily data for overall forecast
-                        const dailyWeatherCode = data.daily.weather_code[1];
-                        const dailyMaxTemp = data.daily.temperature_2m_max[1].toFixed(0);
-                        const dailyMinTemp = data.daily.temperature_2m_min[1].toFixed(0);
-                        const dailyDescription = getWeatherDescription(dailyWeatherCode);
-
-                        // Extract yesterday's high temperature from the daily array at index 0
-                        const yesterdayMaxTemp = data.daily.temperature_2m_max[0].toFixed(0);
-
-                        // Calculate the temperature difference
-                        const tempDiff = dailyMaxTemp - yesterdayMaxTemp;
-                        const diffText = tempDiff > 0 ? `${Math.abs(tempDiff)}°C higher than yesterday` :
-                                            tempDiff < 0 ? `${Math.abs(tempDiff)}°C lower than yesterday` :
-                                            `Same high as yesterday`;
-
-                        // Use current data for day/night
-                        const isDay = data.current.is_day;
-                        const dailyWeatherEmoji = wmoWeatherCodeToEmoji(dailyWeatherCode, isDay);
-                        
-                        // Extract hourly data for the 2-hour rain forecast
-                        const rainProbabilities = data.hourly.precipitation_probability.slice(0, 2);
-                        const maxRainProbability = Math.max(...rainProbabilities);
-
-                        displayElement.innerHTML = `
-                            <p class="text-[10rem] lg:text-[15rem]">${dailyWeatherEmoji}</p>
-                            <div class="flex flex-col items-center justify-center mt-[-2rem]">
-                                <p class="text-xl capitalize">${dailyDescription}</p>
-                                <p class="text-md mt-2">High ${dailyMaxTemp}°C   -     Low ${dailyMinTemp}°C</p>
-                                <p class="text-md mt-1">${diffText}</p>
-                                <p class="text-xl mt-2">🌧️ ${maxRainProbability}%   chance of rain within 2 hrs </p>
-                            </div>
-                        `;
-                        
-                        // Send the 'page-ready' signal to the parent window
-                        window.parent.postMessage({ type: 'page-ready' }, '*');
-                        
-                    } else {
-                        displayElement.innerHTML = '<p class="text-red-500">No weather data found. Data may be incomplete.</p>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Fetch error:', error);
-                    displayElement.innerHTML = `
-                        <p class="text-red-500">Failed to load weather data.</p>
-                        <p class="text-sm mt-2">Please check your Google Apps Script URL and deployment status.</p>
-                    `;
-                });
-        });
-    </script>
-</body>
-</html>
 
