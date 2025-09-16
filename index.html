@@ -104,9 +104,9 @@
 
                         // Calculate the temperature difference
                         const tempDiff = dailyMaxTemp - yesterdayMaxTemp;
-                        const diffText = tempDiff > 0 ? `${Math.abs(tempDiff)}°C warmer than yesterday` :
-                                            tempDiff < 0 ? `${Math.abs(tempDiff)}°C cooler than yesterday` :
-                                            `Similar temprature to yesterday`;
+                        const diffText = tempDiff > 0 ? `${Math.abs(tempDiff)}°C higher than yesterday` :
+                                            tempDiff < 0 ? `${Math.abs(tempDiff)}°C lower than yesterday` :
+                                            `Same high as yesterday`;
 
                         // Use current data for day/night
                         const isDay = data.current.is_day;
@@ -122,7 +122,7 @@
                                 <p class="text-xl capitalize">${dailyDescription}</p>
                                 <p class="text-md mt-2">High ${dailyMaxTemp}°C - Low ${dailyMinTemp}°C</p>
                                 <p class="text-md mt-1">${diffText}</p>
-                                <p class="text-xl mt-2">🌧️ ${maxRainProbability}% chance of rain within 2 hrs</p>
+                                <p class="text-xl mt-2">🌧️ ${maxRainProbability}%   chance of rain within 2 hrs </p>
                             </div>
                         `;
                         
@@ -144,4 +144,3 @@
     </script>
 </body>
 </html>
-
