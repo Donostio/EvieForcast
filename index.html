@@ -105,13 +105,14 @@
                 .then(data => {
                     if (data && data.daily && data.hourly) {
                         const dailyWeatherCode = data.daily.weather_code[1];
-                        const dailyMaxTemp = data.daily.temperature_2m_max[1].toFixed(0);
-                        const dailyMinTemp = data.daily.temperature_2m_min[1].toFixed(0);
+                        const dailyMaxTemp = Number(data.daily.temperature_2m_max[1].toFixed(0));
+                        const dailyMinTemp = Number(data.daily.temperature_2m_min[1].toFixed(0));
+                        const yesterdayMaxTemp = Number(data.daily.temperature_2m_max[0].toFixed(0));
+
                         const dailyDescription = getWeatherDescription(dailyWeatherCode);
-                        const yesterdayMaxTemp = data.daily.temperature_2m_max[0].toFixed(0);
+
                         const tempDiff = dailyMaxTemp - yesterdayMaxTemp;
-                        
-                        const diffText = tempDiff > 0 ? `${Math.abs(tempDiff)}°C warmer than yesterday` :
+                        const diffText = tempDiff > 0 ? `${tempDiff}°C warmer than yesterday` :
                                          tempDiff < 0 ? `${Math.abs(tempDiff)}°C cooler than yesterday` :
                                          `Similar temperature as yesterday`;
 
@@ -149,4 +150,5 @@
     </script>
 </body>
 </html>
+
 
