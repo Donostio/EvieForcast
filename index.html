@@ -14,7 +14,6 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            /* Force black background and white text via inline CSS, in case Tailwind fails */
             background-color: #000 !important;
             color: white !important;
             display: flex;
@@ -25,12 +24,10 @@
             text-align: center;
         }
 
-        /* Apply the emoji font to the element containing emojis */
         .emoji-fallback {
             font-family: 'Noto Color Emoji', 'Inter', sans-serif;
         }
 
-        /* Custom class to ensure main text is white and a consistent size on small screens */
         .main-text {
             color: white !important;
             font-size: 1.875rem;
@@ -41,7 +38,7 @@
 <body class="bg-black text-white"> 
     <div>
         <div id="weather-display" class="flex flex-col items-center justify-center emoji-fallback">
-                        <p class="text-white">Checking weather for journey to LMS...</p> 
+            <p class="text-white">Checking weather for journey to LMS...</p> 
             <br>
             <p class="text-white"> 🚶🏼‍♀️‍➡️ 🚃 🚶🏼‍♀️‍➡️ 🧥 ☂️ ? </p> 
         </div>
@@ -51,7 +48,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             const displayElement = document.getElementById('weather-display');
 
-            // IMPORTANT: This URL must be from the most recent deployment of your Apps Script
             const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyqNZJhOOMDtFwgB5EWaoUuewSijG_DvWB3a015qSshCUsTDAhVaMSlv3jGtc6kKeGMoQ/exec';
             const LAT = 51.42;
             const LON = -0.22;
@@ -65,7 +61,6 @@
                 return;
             }
 
-            // Helper function to get a weather emoji from a WMO code
             const wmoWeatherCodeToEmoji = (code, isDay) => {
                 const isNight = isDay === 0;
                 const emojis = {
@@ -83,7 +78,6 @@
                 return emojis[code] || "❓";
             };
 
-            // Helper function to get weather description from WMO code
             const getWeatherDescription = (code) => {
                 const descriptions = {
                     0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
@@ -110,44 +104,34 @@
                 })
                 .then(data => {
                     if (data && data.daily && data.hourly) {
-                        // Extract daily data for overall forecast
                         const dailyWeatherCode = data.daily.weather_code[1];
                         const dailyMaxTemp = data.daily.temperature_2m_max[1].toFixed(0);
                         const dailyMinTemp = data.daily.temperature_2m_min[1].toFixed(0);
                         const dailyDescription = getWeatherDescription(dailyWeatherCode);
-
-                        // Extract yesterday's high temperature from the daily array at index 0
                         const yesterdayMaxTemp = data.daily.temperature_2m_max[0].toFixed(0);
-
-                        // Calculate the temperature difference
                         const tempDiff = dailyMaxTemp - yesterdayMaxTemp;
                         
-                        // Logic for "warmer" / "cooler"
                         const diffText = tempDiff > 0 ? `${Math.abs(tempDiff)}°C warmer than yesterday` :
                                          tempDiff < 0 ? `${Math.abs(tempDiff)}°C cooler than yesterday` :
                                          `Similar temperature as yesterday`;
 
-                        // Use current data for day/night
                         const isDay = data.current.is_day;
                         const dailyWeatherEmoji = wmoWeatherCodeToEmoji(dailyWeatherCode, isDay);
                         
-                        // Extract hourly data for the 2-hour rain forecast
                         const rainProbabilities = data.hourly.precipitation_probability.slice(0, 2);
                         const maxRainProbability = Math.max(...rainProbabilities);
                         
-                        // Updated display template
                         displayElement.innerHTML = `
-                            <p class="text-7xl leading-none">${dailyWeatherEmoji}</p> 
-                            <div class="flex flex-col items-center justify-center">
+                            <p class="text-7xl leading-none text-white">${dailyWeatherEmoji}</p> 
+                            <div class="flex flex-col items-center justify-center text-white">
                                 <p class="main-text capitalize mt-2">${dailyDescription}</p> 
-                                <p class="text-xl text-white mt-2">High ${dailyMaxTemp}°C / Low ${dailyMinTemp}°C</p> 
-                                <p class="text-xl text-white font-bold">${diffText}</p>
+                                <p class="text-xl mt-2">High ${dailyMaxTemp}°C / Low ${dailyMinTemp}°C</p> 
+                                <p class="text-xl font-bold">${diffText}</p>
                                 <br>
-                                <p class="text-xl text-white mt-2">🌧️ ${maxRainProbability}% chance of rain within 2 hrs</p>
+                                <p class="text-xl mt-2">🌧️ ${maxRainProbability}% chance of rain within 2hrs</p>
                             </div>
                         `;
                         
-                        // Send the 'page-ready' signal to the parent window
                         window.parent.postMessage({ type: 'page-ready' }, '*');
                         
                     } else {
@@ -165,3 +149,4 @@
     </script>
 </body>
 </html>
+
