@@ -14,8 +14,9 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #000;
-            color: white;
+            /* Force black background and white text via inline CSS, in case Tailwind fails */
+            background-color: #000 !important;
+            color: white !important;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -29,20 +30,20 @@
             font-family: 'Noto Color Emoji', 'Inter', sans-serif;
         }
 
-        /* FIX: Custom class to ensure main text is white and a consistent size on small screens */
+        /* Custom class to ensure main text is white and a consistent size on small screens */
         .main-text {
-            color: white !important; /* Force white color for "mega text" */
-            font-size: 1.875rem; /* Equivalent to text-3xl for consistency */
+            color: white !important;
+            font-size: 1.875rem;
             line-height: 2.25rem;
         }
     </style>
 </head>
-<body>
+<body class="bg-black text-white"> 
     <div>
         <div id="weather-display" class="flex flex-col items-center justify-center emoji-fallback">
-            <p>Checking weather for journey to LMS...</p>
+                        <p class="text-white">Checking weather for journey to LMS...</p> 
             <br>
-            <p> 🚶🏼‍♀️‍➡️ 🚃 🚶🏼‍♀️‍➡️ 🧥 ☂️ ? </p> 
+            <p class="text-white"> 🚶🏼‍♀️‍➡️ 🚃 🚶🏼‍♀️‍➡️ 🧥 ☂️ ? </p> 
         </div>
     </div>
 
@@ -121,7 +122,7 @@
                         // Calculate the temperature difference
                         const tempDiff = dailyMaxTemp - yesterdayMaxTemp;
                         
-                        // FIX: Logic for "warmer" / "cooler" without + / -
+                        // Logic for "warmer" / "cooler"
                         const diffText = tempDiff > 0 ? `${Math.abs(tempDiff)}°C warmer than yesterday` :
                                          tempDiff < 0 ? `${Math.abs(tempDiff)}°C cooler than yesterday` :
                                          `Similar temperature as yesterday`;
@@ -134,15 +135,15 @@
                         const rainProbabilities = data.hourly.precipitation_probability.slice(0, 2);
                         const maxRainProbability = Math.max(...rainProbabilities);
                         
-                        // FIXES applied here: Smaller emoji size (text-7xl) and corrected spacing/text classes
+                        // Updated display template
                         displayElement.innerHTML = `
                             <p class="text-7xl leading-none">${dailyWeatherEmoji}</p> 
                             <div class="flex flex-col items-center justify-center">
                                 <p class="main-text capitalize mt-2">${dailyDescription}</p> 
-                                <p class="text-xl mt-2">High **${dailyMaxTemp}°C** / Low **${dailyMinTemp}°C**</p> 
-                                <p class="text-xl font-bold">${diffText}</p>
+                                <p class="text-xl text-white mt-2">High ${dailyMaxTemp}°C / Low ${dailyMinTemp}°C</p> 
+                                <p class="text-xl text-white font-bold">${diffText}</p>
                                 <br>
-                                <p class="text-xl mt-2">🌧️ **${maxRainProbability}%** chance of rain within 2 hrs</p>
+                                <p class="text-xl text-white mt-2">🌧️ ${maxRainProbability}% chance of rain within 2 hrs</p>
                             </div>
                         `;
                         
