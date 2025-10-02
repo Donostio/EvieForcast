@@ -149,7 +149,172 @@
                         
                         // Send the 'page-ready' signal to the parent window
                         window.parent.postMessage({ type: 'page-ready' }, '*');
+                        <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SW London Weather</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Import the standard font */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        
+        /* Import the Noto Color Emoji font for older device compatibility */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap'); 
+
+        body {
+            font-family: 'Inter', sans-serif;
+            /* ENFORCED FIX: Ensure background is black and text is white */
+            background-color: #000 !important;
+            color: white !important;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+
+        /* Apply the emoji font to the element containing emojis */
+        .emoji-fallback {
+            font-family: 'Noto Color Emoji', 'Inter', sans-serif;
+        }
+
+        /* Custom class for the main weather description text size/color */
+        .main-text {
+            color: white !important;
+            font-size: 1.875rem; /* text-3xl */
+            line-height: 2.25rem;
+        }
+    </style>
+</head>
+<body class="bg-black text-white">
+    <div>
+        <div id="weather-display" class="flex flex-col items-center justify-center emoji-fallback">
+                        <p class="text-white">Checking weather for journey to LMS...</p>
+            <br>
+            <p class="text-white"> 🚶🏼‍♀️‍➡️ 🚃 🚶🏼‍♀️‍➡️      🧥      ☂️      ? </p> 
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const displayElement = document.getElementById('weather-display');
+
+            // IMPORTANT: This URL must be from the most recent deployment of your Apps Script
+            const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyqNZJhOOMDtFwgB5EWaoUuewSijG_DvWB3a015qSshCUsTDAhVaMSlv3jGtc6kKeGMoQ/exec';
+            const LAT = 51.42;
+            const LON = -0.22;
+            const apiUrl = `${GAS_WEB_APP_URL}`;
+
+            if (GAS_WEB_APP_URL === 'YOUR_NEWLY_DEPLOYED_APPS_SCRIPT_URL_HERE') {
+                displayElement.innerHTML = `
+                    <p class="text-red-500">Error: Google Apps Script URL not set.</p>
+                    <p class="text-sm mt-2">Please edit this file and replace 'YOUR_NEWLY_DEPLOYED_APPS_SCRIPT_URL_HERE' with your deployed web app URL.</p>
+                `;
+                return;
+            }
+
+            // Helper function to get a weather emoji from a WMO code
+            const wmoWeatherCodeToEmoji = (code, isDay) => {
+                const isNight = isDay === 0;
+                const emojis = {
+                    0: isNight ? "🌙" : "☀️",
+                    1: isNight ? "☁️🌙" : "🌤️",
+                    2: isNight ? "☁️🌙" : "⛅️",
+                    3: "☁️",
+                    45: "🌫️", 48: "🌫️",
+                    51: "🌦️", 53: "🌧️", 55: "🌧️", 56: "🥶🌧️", 57: "🥶🌧️",
+                    61: "🌧️", 63: "🌧️", 65: "🌧️", 66: "🥶🌧️", 67: "🥶🌧️",
+                    71: "🌨️", 73: "🌨️", 75: "🌨️", 77: "🌨️",
+                    80: "🌧️", 81: "🌧️", 82: "🌧️", 85: "🌨️", 86: "🌨️",
+                    95: "⛈️", 96: "⛈️", 99: "⛈️"
+                };
+                return emojis[code] || "❓";
+            };
+
+            // Helper function to get weather description from WMO code
+            const getWeatherDescription = (code) => {
+                const descriptions = {
+                    0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
+                    45: "Fog", 48: "Depositing rime fog",
+                    51: "Light drizzle", 53: "Moderate drizzle", 55: "Dense drizzle",
+                    56: "Light freezing drizzle", 57: "Dense freezing drizzle",
+                    61: "Light rain", 63: "Moderate rain", 65: "Heavy rain",
+                    66: "Light freezing rain", 67: "Heavy freezing rain",
+                    71: "Light snow fall", 73: "Moderate snow fall", 75: "Heavy snow fall",
+                    77: "Snow grains",
+                    80: "Light rain showers", 81: "Moderate rain showers", 82: "Violent rain showers",
+                    85: "Light snow", 86: "Heavy snow",
+                    95: "Thunderstorm", 96: "Thunderstorm with hail", 99: "Thunderstorm with heavy hail"
+                };
+                return descriptions[code] || "Unknown weather";
+            };
+
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Network response was not ok: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.daily && data.hourly) {
+                        // Extract daily data for overall forecast
+                        const dailyWeatherCode = data.daily.weather_code[1];
+                        const dailyMaxTemp = data.daily.temperature_2m_max[1].toFixed(0);
+                        const dailyMinTemp = data.daily.temperature_2m_min[1].toFixed(0);
+                        const dailyDescription = getWeatherDescription(dailyWeatherCode);
+
+                        // Extract yesterday's high temperature from the daily array at index 0
+                        const yesterdayMaxTemp = data.daily.temperature_2m_max[0].toFixed(0);
+
+                        // Calculate the temperature difference
+                        const tempDiff = dailyMaxTemp - yesterdayMaxTemp;
+                        const diffText = tempDiff > 0 ? `${Math.abs(tempDiff)}°C warmer than yesterday` :
+                                             tempDiff < 0 ? `${Math.abs(tempDiff)}°C cooler than yesterday` :
+                                             `Similar temperature as yesterday`;
+
+                        // Use current data for day/night
+                        const isDay = data.current.is_day;
+                        // Using a smaller emoji size (text-7xl) from the previous attempt to match the original image
+                        const dailyWeatherEmoji = wmoWeatherCodeToEmoji(dailyWeatherCode, isDay);
                         
+                        // Extract hourly data for the 2-hour rain forecast
+                        const rainProbabilities = data.hourly.precipitation_probability.slice(0, 2);
+                        const maxRainProbability = Math.max(...rainProbabilities);
+                        
+                        // FIXES: Applying classes to ensure text is the correct size/color and correcting spacing for numbers.
+                        displayElement.innerHTML = `
+                            <p class="text-7xl leading-none">${dailyWeatherEmoji}</p> 
+                            <div class="flex flex-col items-center justify-center">
+                                <p class="main-text capitalize mt-2">${dailyDescription}</p> 
+                                                                <p class="text-xl mt-2">High <span class="text-white">${dailyMaxTemp}</span>°C / Low <span class="text-white">${dailyMinTemp}</span>°C</p> 
+                                <p class="text-xl font-bold">${diffText}</p>
+                                <br>
+                                                                <p class="text-xl mt-2">🌧️ <span class="text-white">${maxRainProbability}</span>% chance of rain within 2 hrs</p>
+                            </div>
+                        `;
+                        
+                        // Send the 'page-ready' signal to the parent window
+                        window.parent.postMessage({ type: 'page-ready' }, '*');
+                        
+                    } else {
+                        displayElement.innerHTML = '<p class="text-red-500">No weather data found. Data may be incomplete.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    displayElement.innerHTML = `
+                        <p class="text-red-500">Failed to load weather data.</p>
+                        <p class="text-sm mt-2">Please check your Google Apps Script URL and deployment status.</p>
+                    `;
+                });
+        });
+    </script>
+</body>
+</html>
                     } else {
                         displayElement.innerHTML = '<p class="text-red-500">No weather data found. Data may be incomplete.</p>';
                     }
