@@ -6,16 +6,12 @@
     <title>SW London Weather</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Import the standard font */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
-        
-        /* Import the Noto Color Emoji font for older device compatibility */
         @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap'); 
 
         body {
             font-family: 'Inter', sans-serif;
             background-color: #000 !important;
-            color: white !important;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -24,23 +20,32 @@
             text-align: center;
         }
 
+        /* ✅ Force absolutely everything white */
+        * {
+            color: #ffffff !important;
+        }
+
         .emoji-fallback {
             font-family: 'Noto Color Emoji', 'Inter', sans-serif;
         }
 
         .main-text {
-            color: white !important;
             font-size: 1.875rem;
             line-height: 2.25rem;
+            font-variant-numeric: tabular-nums; /* ✅ even digit spacing */
+        }
+
+        .text-xl {
+            font-variant-numeric: tabular-nums; /* ✅ even digit spacing */
         }
     </style>
 </head>
-<body class="bg-black text-white"> 
+<body class="bg-black"> 
     <div>
         <div id="weather-display" class="flex flex-col items-center justify-center emoji-fallback">
-            <p class="text-white">Checking weather for journey to LMS...</p> 
+            <p>Checking weather for journey to LMS...</p> 
             <br>
-            <p class="text-white"> 🚶🏼‍♀️‍➡️ 🚃 🚶🏼‍♀️‍➡️ 🧥 ☂️ ? </p> 
+            <p> 🚶🏼‍♀️‍➡️ 🚃 🚶🏼‍♀️‍➡️ 🧥 ☂️ ? </p> 
         </div>
     </div>
 
@@ -49,14 +54,12 @@
             const displayElement = document.getElementById('weather-display');
 
             const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyqNZJhOOMDtFwgB5EWaoUuewSijG_DvWB3a015qSshCUsTDAhVaMSlv3jGtc6kKeGMoQ/exec';
-            const LAT = 51.42;
-            const LON = -0.22;
             const apiUrl = `${GAS_WEB_APP_URL}`;
 
             if (GAS_WEB_APP_URL === 'YOUR_NEWLY_DEPLOYED_APPS_SCRIPT_URL_HERE') {
                 displayElement.innerHTML = `
                     <p class="text-red-500">Error: Google Apps Script URL not set.</p>
-                    <p class="text-sm mt-2">Please edit this file and replace 'YOUR_NEWLY_DEPLOYED_APPS_SCRIPT_URL_HERE' with your deployed web app URL.</p>
+                    <p class="text-sm mt-2">Please edit this file and replace the URL with your deployed web app URL.</p>
                 `;
                 return;
             }
@@ -95,6 +98,9 @@
                 return descriptions[code] || "Unknown weather";
             };
 
+            // ✅ Helper to format temps cleanly
+            const formatTemp = (t) => `${t}°C`;
+
             fetch(apiUrl)
                 .then(response => {
                     if (!response.ok) {
@@ -123,10 +129,10 @@
                         const maxRainProbability = Math.max(...rainProbabilities);
                         
                         displayElement.innerHTML = `
-                            <p class="text-7xl leading-none text-white">${dailyWeatherEmoji}</p> 
-                            <div class="flex flex-col items-center justify-center text-white">
+                            <p class="text-7xl leading-none">${dailyWeatherEmoji}</p> 
+                            <div class="flex flex-col items-center justify-center">
                                 <p class="main-text capitalize mt-2">${dailyDescription}</p> 
-                                <p class="text-xl mt-2">High ${dailyMaxTemp}°C / Low ${dailyMinTemp}°C</p> 
+                                <p class="text-xl mt-2">High ${formatTemp(dailyMaxTemp)} / Low ${formatTemp(dailyMinTemp)}</p> 
                                 <p class="text-xl font-bold">${diffText}</p>
                                 <br>
                                 <p class="text-xl mt-2">🌧️ ${maxRainProbability}% chance of rain within 2hrs</p>
@@ -150,5 +156,6 @@
     </script>
 </body>
 </html>
+
 
 
