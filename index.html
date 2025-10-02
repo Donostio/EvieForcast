@@ -6,16 +6,13 @@
     <title>SW London Weather</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Import the standard font */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
-        
-        /* Import the Noto Color Emoji font for older device compatibility */
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap'); 
-
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #000 !important;
-            color: white !important;
+            /* FIX: Add generic 'emoji' to the font stack to prevent 'Inter' from breaking the emojis, 
+            forcing the browser to use its native (older) emoji font for those characters. */
+            font-family: 'Inter', sans-serif, 'Noto Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Apple Color Emoji', emoji;
+            background-color: #000;
+            color: white;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -23,24 +20,19 @@
             min-height: 100vh;
             text-align: center;
         }
-
-        .emoji-fallback {
-            font-family: 'Noto Color Emoji', 'Inter', sans-serif;
-        }
-
-        .main-text {
-            color: white !important;
-            font-size: 1.875rem;
-            line-height: 2.25rem;
+        
+        /* Optional: Add a style to ensure the large emoji is not affected by Inter's line-height */
+        .emoji-fix {
+            font-family: 'Noto Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Apple Color Emoji', emoji;
         }
     </style>
 </head>
-<body class="bg-black text-white"> 
+<body>
     <div>
-        <div id="weather-display" class="flex flex-col items-center justify-center emoji-fallback">
-            <p class="text-white">Checking weather for journey to LMS...</p> 
+        <div id="weather-display" class="flex flex-col items-center justify-center">
+            <p>Checking weather for journey to LMS...</p>
             <br>
-            <p class="text-white"> 🚶🏼‍♀️‍➡️ 🚃 🚶🏼‍♀️‍➡️ 🧥 ☂️ ? </p> 
+            <p> 🚶‍♀️ 🚃 🚶‍♀️     🧥     ☂️     ? </p> 
         </div>
     </div>
 
@@ -48,6 +40,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const displayElement = document.getElementById('weather-display');
 
+            // IMPORTANT: This URL must be from the most recent deployment of your Apps Script
             const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyqNZJhOOMDtFwgB5EWaoUuewSijG_DvWB3a015qSshCUsTDAhVaMSlv3jGtc6kKeGMoQ/exec';
             const LAT = 51.42;
             const LON = -0.22;
@@ -61,8 +54,10 @@
                 return;
             }
 
+            // Helper function to get a weather emoji from a WMO code
             const wmoWeatherCodeToEmoji = (code, isDay) => {
                 const isNight = isDay === 0;
+                // NOTE: Emojis are the same as your original, but should now render correctly.
                 const emojis = {
                     0: isNight ? "🌙" : "☀️",
                     1: isNight ? "☁️🌙" : "🌤️",
@@ -78,6 +73,7 @@
                 return emojis[code] || "❓";
             };
 
+            // Helper function to get weather description from WMO code
             const getWeatherDescription = (code) => {
                 const descriptions = {
                     0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
@@ -104,35 +100,43 @@
                 })
                 .then(data => {
                     if (data && data.daily && data.hourly) {
+                        // Extract daily data for overall forecast
                         const dailyWeatherCode = data.daily.weather_code[1];
-                        const dailyMaxTemp = Number(data.daily.temperature_2m_max[1].toFixed(0));
-                        const dailyMinTemp = Number(data.daily.temperature_2m_min[1].toFixed(0));
-                        const yesterdayMaxTemp = Number(data.daily.temperature_2m_max[0].toFixed(0));
-
+                        const dailyMaxTemp = data.daily.temperature_2m_max[1].toFixed(0);
+                        const dailyMinTemp = data.daily.temperature_2m_min[1].toFixed(0);
                         const dailyDescription = getWeatherDescription(dailyWeatherCode);
 
-                        const tempDiff = dailyMaxTemp - yesterdayMaxTemp;
-                        const diffText = tempDiff > 0 ? `${tempDiff}°C warmer than yesterday` :
-                                         tempDiff < 0 ? `${Math.abs(tempDiff)}°C cooler than yesterday` :
-                                         `Similar temperature as yesterday`;
+                        // Extract yesterday's high temperature from the daily array at index 0
+                        const yesterdayMaxTemp = data.daily.temperature_2m_max[0].toFixed(0);
 
+                        // Calculate the temperature difference
+                        const tempDiff = dailyMaxTemp - yesterdayMaxTemp;
+                        const diffText = tempDiff > 0 ? `${Math.abs(tempDiff)}°C warmer than yesterday` :
+                                                 tempDiff < 0 ? `${Math.abs(tempDiff)}°C cooler than yesterday` :
+                                                 `Similar temperature as yesterday`;
+
+                        // Use current data for day/night
                         const isDay = data.current.is_day;
                         const dailyWeatherEmoji = wmoWeatherCodeToEmoji(dailyWeatherCode, isDay);
                         
+                        // Extract hourly data for the 2-hour rain forecast
                         const rainProbabilities = data.hourly.precipitation_probability.slice(0, 2);
                         const maxRainProbability = Math.max(...rainProbabilities);
                         
+                        // APPLY 'emoji-fix' class to the large emoji to ensure proper rendering
                         displayElement.innerHTML = `
-                            <p class="text-7xl leading-none text-white">${dailyWeatherEmoji}</p> 
-                            <div class="flex flex-col items-center justify-center text-white">
-                                <p class="main-text capitalize mt-2">${dailyDescription}</p> 
-                                <p class="text-xl mt-2">High${dailyMaxTemp}°C / Low${dailyMinTemp}°C</p> 
-                                <p class="text-xl font-bold">${diffText}</p>
+                            <p class="text-[10rem] lg:text-[15rem] leading-none mb-[-2rem] emoji-fix">${dailyWeatherEmoji}</p>
+                            <div class="flex flex-col items-center justify-center">
+                                <br><br>
+                                <p class="text-3xl capitalize mt-2">${dailyDescription}</p>
+                                <p class="text-xl mt-2">High ${dailyMaxTemp}°C - Low ${dailyMinTemp}°C</p>
+                                <p class="text-xl">${diffText}</p>
                                 <br>
-                                <p class="text-xl mt-2">🌧️ ${maxRainProbability}% chance of rain within 2hrs</p>
+                                <p class="text-xl mt-2">🌧️ ${maxRainProbability}% chance of rain within 2 hrs </p>
                             </div>
                         `;
                         
+                        // Send the 'page-ready' signal to the parent window
                         window.parent.postMessage({ type: 'page-ready' }, '*');
                         
                     } else {
