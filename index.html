@@ -14,7 +14,9 @@
 
         body {
             font-family: 'Inter', sans-serif;
+            /* Ensures the background is black */
             background-color: #000;
+            /* Ensures the default text color is white */
             color: white;
             display: flex;
             flex-direction: column;
@@ -139,10 +141,10 @@
                             <p class="text-7xl leading-none">${dailyWeatherEmoji}</p> 
                             <div class="flex flex-col items-center justify-center">
                                 <p class="main-text capitalize mt-2">${dailyDescription}</p> 
-                                                                <p class="text-xl mt-2">High <span class="text-white">${dailyMaxTemp}</span>°C / Low <span class="text-white">${dailyMinTemp}</span>°C</p> 
+                                                                <p class="text-xl mt-2">High <span class="text-white">${dailyMaxTemp}</span>°C / Low <span class="text-white">${dailyMinTemp}</span>°C</p> 
                                 <p class="text-xl font-bold">${diffText}</p>
                                 <br>
-                                                                <p class="text-xl mt-2">🌧️ <span class="text-white">${maxRainProbability}</span>% chance of rain within 2 hrs</p>
+                                                                <p class="text-xl mt-2">🌧️ <span class="text-white">${maxRainProbability}</span>% chance of rain within 2 hrs</p>
                             </div>
                         `;
                         
