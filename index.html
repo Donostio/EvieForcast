@@ -8,9 +8,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
         body {
-            /* FIX: Add generic 'emoji' to the font stack to prevent 'Inter' from breaking the emojis, 
-            forcing the browser to use its native (older) emoji font for those characters. */
-            font-family: 'Inter', sans-serif, 'Noto Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Apple Color Emoji', emoji;
+            font-family: 'Inter', sans-serif;
             background-color: #000;
             color: white;
             display: flex;
@@ -20,11 +18,6 @@
             min-height: 100vh;
             text-align: center;
         }
-        
-        /* Optional: Add a style to ensure the large emoji is not affected by Inter's line-height */
-        .emoji-fix {
-            font-family: 'Noto Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Apple Color Emoji', emoji;
-        }
     </style>
 </head>
 <body>
@@ -32,7 +25,7 @@
         <div id="weather-display" class="flex flex-col items-center justify-center">
             <p>Checking weather for journey to LMS...</p>
             <br>
-            <p> 🚶‍♀️ 🚃 🚶‍♀️     🧥     ☂️     ? </p> 
+            <p> 🚶🏼‍♀️‍➡️ 🚃 🚶🏼‍♀️‍➡️     🧥     ☂️     ? </p>
         </div>
     </div>
 
@@ -40,24 +33,36 @@
         document.addEventListener('DOMContentLoaded', () => {
             const displayElement = document.getElementById('weather-display');
 
-            // IMPORTANT: This URL must be from the most recent deployment of your Apps Script
-            const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyqNZJhOOMDtFwgB5EWaoUuewSijG_DvWB3a015qSshCUsTDAhVaMSlv3jGtc6kKeGMoQ/exec';
-            const LAT = 51.42;
-            const LON = -0.22;
-            const apiUrl = `${GAS_WEB_APP_URL}`;
+            // --- API Configuration (Defined directly in client-side JS) ---
+            const LAT = 51.45; // Latitude for a point in SW London
+            const LON = -0.15; // Longitude for a point in SW London
+            const FORECAST_HOURS = 2;
+            const FORECAST_DAYS = 1;
+            const API_BASE_URL = "https://api.open-meteo.com/v1/forecast";
 
-            if (GAS_WEB_APP_URL === 'YOUR_NEWLY_DEPLOYED_APPS_SCRIPT_URL_HERE') {
-                displayElement.innerHTML = `
-                    <p class="text-red-500">Error: Google Apps Script URL not set.</p>
-                    <p class="text-sm mt-2">Please edit this file and replace 'YOUR_NEWLY_DEPLOYED_APPS_SCRIPT_URL_HERE' with your deployed web app URL.</p>
-                `;
-                return;
-            }
+            const params = {
+                latitude: LAT,
+                longitude: LON,
+                current: "temperature_2m,weather_code,is_day",
+                hourly: "precipitation_probability", 
+                daily: "weather_code,temperature_2m_max,temperature_2m_min", 
+                forecast_days: FORECAST_DAYS,
+                forecast_hours: FORECAST_HOURS, 
+                timezone: "GMT",
+                past_days: 1, // Request yesterday's data for comparison
+            };
+
+            // Build the query string dynamically
+            const queryString = Object.keys(params)
+                .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(params[key]))
+                .join('&');
+
+            const fullUrl = `${API_BASE_URL}?${queryString}`;
+            // -----------------------------------------------------------------
 
             // Helper function to get a weather emoji from a WMO code
             const wmoWeatherCodeToEmoji = (code, isDay) => {
                 const isNight = isDay === 0;
-                // NOTE: Emojis are the same as your original, but should now render correctly.
                 const emojis = {
                     0: isNight ? "🌙" : "☀️",
                     1: isNight ? "☁️🌙" : "🌤️",
@@ -91,52 +96,49 @@
                 return descriptions[code] || "Unknown weather";
             };
 
-            fetch(apiUrl)
+            // --- Direct Fetch Call to Open-Meteo ---
+            fetch(fullUrl) 
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error(`Network response was not ok: ${response.statusText}`);
+                        // This error indicates the Open-Meteo API had an issue.
+                        throw new Error(`Open-Meteo API response was not ok: ${response.statusText}`);
                     }
                     return response.json();
                 })
                 .then(data => {
                     if (data && data.daily && data.hourly) {
-                        // Extract daily data for overall forecast
+                        // All existing data processing logic remains the same
                         const dailyWeatherCode = data.daily.weather_code[1];
                         const dailyMaxTemp = data.daily.temperature_2m_max[1].toFixed(0);
                         const dailyMinTemp = data.daily.temperature_2m_min[1].toFixed(0);
                         const dailyDescription = getWeatherDescription(dailyWeatherCode);
-
-                        // Extract yesterday's high temperature from the daily array at index 0
                         const yesterdayMaxTemp = data.daily.temperature_2m_max[0].toFixed(0);
 
-                        // Calculate the temperature difference
                         const tempDiff = dailyMaxTemp - yesterdayMaxTemp;
                         const diffText = tempDiff > 0 ? `${Math.abs(tempDiff)}°C warmer than yesterday` :
-                                                 tempDiff < 0 ? `${Math.abs(tempDiff)}°C cooler than yesterday` :
-                                                 `Similar temperature as yesterday`;
+                                                     tempDiff < 0 ? `${Math.abs(tempDiff)}°C cooler than yesterday` :
+                                                     `Similar temperature as yesterday`;
 
-                        // Use current data for day/night
                         const isDay = data.current.is_day;
                         const dailyWeatherEmoji = wmoWeatherCodeToEmoji(dailyWeatherCode, isDay);
                         
-                        // Extract hourly data for the 2-hour rain forecast
                         const rainProbabilities = data.hourly.precipitation_probability.slice(0, 2);
                         const maxRainProbability = Math.max(...rainProbabilities);
                         
-                        // APPLY 'emoji-fix' class to the large emoji to ensure proper rendering
                         displayElement.innerHTML = `
-                            <p class="text-[10rem] lg:text-[15rem] leading-none mb-[-2rem] emoji-fix">${dailyWeatherEmoji}</p>
+                            <p class="text-[10rem] lg:text-[15rem] leading-none">
+                                ${dailyWeatherEmoji}
+                            </p>
                             <div class="flex flex-col items-center justify-center">
                                 <br><br>
                                 <p class="text-3xl capitalize mt-2">${dailyDescription}</p>
-                                <p class="text-xl mt-2">High ${dailyMaxTemp}°C - Low ${dailyMinTemp}°C 🥶</p>
+                                <p class="text-xl mt-2">High ${dailyMaxTemp}°C - Low ${dailyMinTemp}°C</p>
                                 <p class="text-xl">${diffText}</p>
                                 <br>
                                 <p class="text-xl mt-2">🌧️ ${maxRainProbability}% chance of rain within 2 hrs </p>
                             </div>
                         `;
                         
-                        // Send the 'page-ready' signal to the parent window
                         window.parent.postMessage({ type: 'page-ready' }, '*');
                         
                     } else {
@@ -147,7 +149,7 @@
                     console.error('Fetch error:', error);
                     displayElement.innerHTML = `
                         <p class="text-red-500">Failed to load weather data.</p>
-                        <p class="text-sm mt-2">Please check your Google Apps Script URL and deployment status.</p>
+                        <p class="text-sm mt-2">Please check your network connection or the Open-Meteo API status.</p>
                     `;
                 });
         });
